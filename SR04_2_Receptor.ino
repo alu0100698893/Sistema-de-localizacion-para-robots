@@ -49,22 +49,22 @@ volatile uint32_t tiempo_0 = 0;
 volatile int num_int = 0; //contador para ver el numero de interrupciones
 
 /*Variables que se usaran para la trilateración*/
-float a;
-float b;
-float c;
-float d;
-float e;
-float f;
-float x1;
-float y1;
-float x2;
-float y2;
-float x3;
-float y3;
-float x_total;
-float y_total;
-float pos_1;
-float pos_2;
+int a;
+int b;
+int c;
+int d;
+int e;
+int f;
+int x1;
+int y1;
+int x2;
+int y2;
+int x3;
+int y3;
+int x_total;
+int y_total;
+int pos_1;
+int pos_2;
 
 //Creamos un mensaje
 //La constante VW_MAX_MESSAGE_LEN viene definida en la libreria VirtualWire
@@ -229,9 +229,9 @@ void loop() {
           //Serial.println(tiempo_0);  
         } 
         distancia_A = ((0.0167 * tiempo_0) - 2.9587 );
-        Serial.print("Distancia al emisor A: ");
+        /*Serial.print("Distancia al emisor A: ");
         Serial.print(distancia_A);
-        Serial.println(" cm");
+        Serial.println(" cm");*/
       }
       if(sms[0] == 'B'){ //Comprobamos que la señal provenga del segundo sensor
         //Serial.println("Conectado a B");
@@ -243,9 +243,9 @@ void loop() {
          // Serial.println(tiempo_0);  
         } 
         distancia_B = ((0.0167 * tiempo_0) - 2.9587 );
-        Serial.print("Distancia al emisor B: ");
+        /*Serial.print("Distancia al emisor B: ");
         Serial.print(distancia_B);
-        Serial.println(" cm");
+        Serial.println(" cm");*/
       }
       if(sms[0] == 'C'){ //Comprobamos que la señal provenga del tercer sensor
         //Serial.println("Conectado a C");
@@ -257,40 +257,41 @@ void loop() {
           //Serial.println(tiempo_0);  
         } 
         distancia_C = ((0.0167 * tiempo_0) - 2.9587 );
-        Serial.print("Distancia al emisor C: ");
+       /* Serial.print("Distancia al emisor C: ");
         Serial.print(distancia_C);
-        Serial.println(" cm");
+        Serial.println(" cm");*/
       } 
   }
+  delay(6000);
   
   /*Apartir de aqui calculamos la trilateración*/
   /*Damos valores fijos a las posiciones de los sensores que actuaran de emisor*/
-/*  x1 = -200;
+  x1 = 37;
   y1 = 0;
-  x2 = 100;
-  y2 = 100;
-  x3 = -100; 
-  y3 = -100;
- */ 
-  /*Calculos de los sistemas de ecuaciones*/
- /* a = (-2*x1)+(2*x2);
-  b = (-2*y1)+(2*y2);
-  c = (-2*x2)+(2*x3);
-  d = (-2*y2)+(2*y3);
-  e = (distancia_A*distancia_A)-(distancia_B*distancia_B)-(x1*x1)+(x2*x2)-(y1*y1)+(y2*y2);
-  f = (distancia_B*distancia_B)-(distancia_C*distancia_C)-(x2*x2)+(x3*x3)-(y2*y2)+(y3*y3);
+  x2 = 5;
+  y2 = 25;
+  x3 = -34; 
+  y3 = -2;
 
-  x_total = ((c*e)-(f*b)/(e*a)-(b*d)); 
-  y_total = ((c*d)-(a*f)/(b*d)-(a*e));
-*/
+  /*Calculos de los sistemas de ecuaciones*/
+  a = (-2*x1)+(2*x2);
+  b = (-2*y1)+(2*y2);
+  c = (diatancia_A*distancia_A)-(distancia_B*distancia_B)-(x1*x1)+(x2*x2)-(y1*y1)+(y2*y2);
+  d = (-2*x2)+(2*x3);
+  e = (-2*y2)+(2*y3);
+  f = (distancia_B*distancia_B)-(distancia_C*distancia_C)-(x2*x2)+(x3*x3)-(y2*y2)+(y3*y3);
+  
+  x_total = ((c*e)-(f*b))/((e*a)-(b*d)); 
+  y_total = ((c*d)-(a*f))/((b*d)-(a*e));
+
   /*Mostramos la posición actual del robot*/
-/*  pos_1 = x_total;
+  pos_1 = x_total;
   pos_2 = y_total;
 
   Serial.println("Posición aproximada");
   Serial.println(pos_1);
   Serial.println(pos_2);
-*/
+
   /*Apartir de aqui utilizaremos las funciones de ROS para poder establecer una comunicacion*/
   //Rellenamos los campos de nuestra transformación (tf odom->base_link)
  /*t.header.frame_id = odom;
