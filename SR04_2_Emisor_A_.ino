@@ -7,14 +7,14 @@
  */
 //libreria necesaria para los modulos RF
 #include <VirtualWire.h>
-//#include <TimerOne.h>
 
 const int pin_RF_Emisor = 11; //pin del emisor
 const int pin_RF_Receptor = 9; //pin del receptor
 const int pin_SR04_Trigger = 13; //pin del ultrasonido (solo trigger)
 
 double Ultimo_envio = 0; //para saber el ultimo envio que realiza 
-
+int i; //variable para el for que envia X veces seguidas el mensaje de RF
+int j; //variable para el for que envia X veces seguidas el mensaje de RF
 
 //Creamos un mensaje
 uint8_t sms[VW_MAX_MESSAGE_LEN];
@@ -32,37 +32,44 @@ void setup() {
 }
 
 void loop() {
-  //Serial.print("M ");
-  //Serial.println(millis());
   if(vw_get_message(sms, &sms_len)){
     if(sms[0] == 'C'){ //Emitimos cuando recibamos el mensaje del emisor C
       Serial.println("Mensaje C Recibido");
-      delay(2000);
-      //Comunicacion RF
-      const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
-      vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
-      vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad
-  
-      //SR04(Ultrasonido)
-      digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
-      delayMicroseconds(5);
-      digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
-
-      //Ponemos el contador a cero para que en la interrupcion no se envie señales si todo va bien
+      delay(500);
+      for( j = 0; j < 10; j++ ){
+        delay(10);
+        //Comunicacion RF
+        const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
+        vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
+        vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad  
+      }
+      if(j == 10){
+        //SR04(Ultrasonido)
+        digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
+        delayMicroseconds(5);
+        digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
+       //Serial.println("Ultrasonido lanzado");
+      }
+      j = 0;
+      //Ponemos el contador a cero para que en la interrupcion no envie señales si todo va bien
       Ultimo_envio = millis();
     } 
   }
   if (millis() - Ultimo_envio > 20000) {
-    Ultimo_envio = millis();
-    const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
-    vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
-    vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad
-          
-    //SR04(Ultrasonido)
-    digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
-    delayMicroseconds(5);
-    digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
-
     Serial.println("Nuevo Mensaje A"); 
+    for( i = 0; i < 10; i++ ){
+      delay(10);
+      Ultimo_envio = millis();
+      const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
+      vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
+      vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad
+    }
+    if(i == 10){      
+      //SR04(Ultrasonido)
+      digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
+      delayMicroseconds(5);
+      digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
+    }
+    i = 0;
   }
 }

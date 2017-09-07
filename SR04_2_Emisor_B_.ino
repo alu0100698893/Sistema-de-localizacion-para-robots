@@ -8,9 +8,11 @@
 //libreria necesaria para los modulos RF
 #include <VirtualWire.h>
 
-const int pin_RF_Emisor = 12; //pin del emisor
-const int pin_RF_Receptor = 11; //pin del receptor
+const int pin_RF_Emisor = 11; //pin del emisor
+const int pin_RF_Receptor = 9; //pin del receptor
 const int pin_SR04_Trigger = 13; // pin del ultrasonido (solo trigger)
+
+int i; //variable para el for que envia X veces seguidas el mensaje de RF
 
 //Creamos un mensaje
 uint8_t sms[VW_MAX_MESSAGE_LEN];
@@ -30,16 +32,22 @@ void setup() {
 void loop() {
   if(vw_get_message(sms, &sms_len)){
     if(sms[0] == 'A'){ //Emitimos cuando recibamos el mensaje del emisor A
-      delay(2000);
-      //Comunicacion RF
-      const char *mensaje = "B"; //mensaje identificativo que enviaremos al receptor
-      vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
-      vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad
-
-      //SR04(ultrasonido)
-      digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
-      delayMicroseconds(5);
-      digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso  
+      Serial.println("Llego mensaje");
+      delay(500);
+      for(i = 0; i < 10; i++){
+         delay(10);
+         //Comunicacion RF
+         const char *mensaje = "B"; //mensaje identificativo que enviaremos al receptor
+         vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
+         vw_wait_tx(); //esperamos que el mensaje sea transmitido en su totalidad
+      }
+      if(i == 10){
+        //SR04(ultrasonido)
+        digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
+        delayMicroseconds(5);
+        digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
+      }
+      i = 0;  
     }
   }
 }
