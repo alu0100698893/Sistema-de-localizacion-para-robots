@@ -33,9 +33,9 @@ void loop() {
   if(vw_get_message(sms, &sms_len)){
     if(sms[0] == 'A'){ //Emitimos cuando recibamos el mensaje del emisor A
       Serial.println("Llego mensaje");
-      delay(500);
+      delay(2000);
       for(i = 0; i < 10; i++){
-         delay(10);
+         //delay(10);
          //Comunicacion RF
          const char *mensaje = "B"; //mensaje identificativo que enviaremos al receptor
          vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada

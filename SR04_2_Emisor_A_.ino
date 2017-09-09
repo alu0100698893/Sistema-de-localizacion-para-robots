@@ -35,9 +35,8 @@ void loop() {
   if(vw_get_message(sms, &sms_len)){
     if(sms[0] == 'C'){ //Emitimos cuando recibamos el mensaje del emisor C
       Serial.println("Mensaje C Recibido");
-      delay(500);
+      delay(1000);
       for( j = 0; j < 10; j++ ){
-        delay(10);
         //Comunicacion RF
         const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
         vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
@@ -48,7 +47,6 @@ void loop() {
         digitalWrite(pin_SR04_Trigger, LOW); //Para estabilizar el sensor
         delayMicroseconds(5);
         digitalWrite(pin_SR04_Trigger, HIGH); //Activamos el envio del pulso
-       //Serial.println("Ultrasonido lanzado");
       }
       j = 0;
       //Ponemos el contador a cero para que en la interrupcion no envie señales si todo va bien
@@ -56,9 +54,10 @@ void loop() {
     } 
   }
   if (millis() - Ultimo_envio > 20000) {
-    Serial.println("Nuevo Mensaje A"); 
+    Serial.println("Nuevo Mensaje A");
+    delay(1000); 
     for( i = 0; i < 10; i++ ){
-      delay(10);
+      //delay(10);
       Ultimo_envio = millis();
       const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
       vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada

@@ -33,12 +33,10 @@ float distancia_C; //variable para almacenar la distancia al emisor C
 
 //Variables para obtener los tiempos del timer
 volatile uint32_t tiempo_1 = 0; 
-volatile uint32_t tiempo_2 = 0;
-volatile uint32_t tiempo_3 = 0;
-volatile uint32_t tiempo_4 = 0;
-volatile uint32_t tiempo_0 = 0;
-volatile int num_int = 0; //contador para ver el numero de interrupciones
 uint8_t ultimo_mensaje_recibido; //variable que almacena el ultimo mensaje que recibimos a tra vés de RF
+bool dist_calculada_A = 0;
+bool dist_calculada_B = 0;
+bool dist_calculada_C = 0;
 
 //Creamos un mensaje radio-frecuencia
 //La constante VW_MAX_MESSAGE_LEN viene definida en la libreria VirtualWire
@@ -46,22 +44,22 @@ uint8_t sms[VW_MAX_MESSAGE_LEN];
 uint8_t sms_len = VW_MAX_MESSAGE_LEN;
 
 /*Variables que se usaran para la trilateración*/
-int a;
-int b;
-int c;
-int d;
-int e;
-int f;
-int x1;
-int y1;
-int x2;
-int y2;
-int x3;
-int y3;
-int x_total;
-int y_total;
-int pos_1;
-int pos_2;
+float a;
+float b;
+float c;
+float d;
+float e;
+float f;
+float x1;
+float y1;
+float x2;
+float y2;
+float x3;
+float y3;
+float x_total;
+float y_total;
+float pos_1;
+float pos_2;
 
 //ROS
 /*ros::NodeHandle nh; //nodo objeto para ROS
@@ -96,104 +94,38 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_4), calc_time_distancia_4, RISING); //interrupción asignada a nuestro pin arduino
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_5), calc_time_distancia_5, RISING); //interrupción asignada a nuestro pin arduino
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_6), calc_time_distancia_6, RISING); //interrupción asignada a nuestro pin arduino
-  Serial.println("INICIANDO ");
+  Serial.println("INICIANDO... ");
 }
 
 //Inicio de las ISR para coger el tiempo de nuestro Timer
 void calc_time_distancia_1(void){
-  if(num_int == 0){
+  
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3; 
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 
 void calc_time_distancia_2(void){
-  if(num_int == 0){
+  
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3;
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 
 void calc_time_distancia_3(void){
-  if(num_int == 0){
+  
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3;
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 
 void calc_time_distancia_4(void){
-  if(num_int == 0){
+
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3;
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 
 void calc_time_distancia_5(void){
-  if(num_int == 0){
+  
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3;
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 
 void calc_time_distancia_6(void){
-  if(num_int == 0){
+ 
     tiempo_1 = TCNT3;
-  }
-  else if(num_int == 1){
-    tiempo_2 = TCNT3;
-  }
-  else if(num_int == 2){
-    tiempo_3 = TCNT3; 
-  }
-  else if(num_int == 3){
-    tiempo_4 = TCNT3;
-  }
-  num_int++;
 }
 //Fin de las ISR para coger el tiempo de nuestro Timer
 
@@ -207,11 +139,8 @@ void loop() {
       //Serial.println(sms[0]);
       if(sms[0] == 'A'){ //Comprobamos que la señal provenga del primer sensor
         Timer3.restart();
-        num_int = 0;
         tiempo_1 = 0;
-        tiempo_2 = 0;
-        tiempo_3 = 0;
-        tiempo_4 = 0;
+        dist_calculada_A = 0;
         if(sms[0] != ultimo_mensaje_recibido){
           Serial.println(" recibido A");
         }
@@ -219,86 +148,91 @@ void loop() {
       }
       if(sms[0] == 'B'){ //Comprobamos que la señal provenga del segundo sensor
         Timer3.restart();
-        num_int = 0; 
         tiempo_1 = 0;
-        tiempo_2 = 0;
-        tiempo_3 = 0;
-        tiempo_4 = 0;
+        dist_calculada_B = 0;
         if(sms[0] != ultimo_mensaje_recibido){
           Serial.println(" recibido B");
         }
         ultimo_mensaje_recibido = sms[0];
       }
       if(sms[0] == 'C'){ //Comprobamos que la señal provenga del tercer sensor
-        Timer3.restart();
-        num_int = 0; 
+        Timer3.restart(); 
         tiempo_1 = 0;
-        tiempo_2 = 0;
-        tiempo_3 = 0;
-        tiempo_4 = 0;
+        dist_calculada_C = 0;
         if(sms[0] != ultimo_mensaje_recibido){
           Serial.println(" recibido C");
         }
         ultimo_mensaje_recibido = sms[0];
-      }   
+      } 
   }
   //Serial.print("ultimo mensaje: ");
   //Serial.println(ultimo_mensaje_recibido);
   if(ultimo_mensaje_recibido == 'A'){
-    if(tiempo_1 > 0 && num_int == 1/*&& tiempo_2 > 0 && tiempo_3 > 0 && tiempo_4 > 0 && num_int == 4*/ ){
-       //tiempo_0=(tiempo_1 + tiempo_2 + tiempo_3 + tiempo_4)/4;
-       distancia_A = ((0.00199 * tiempo_1) );
+    if(tiempo_1 > 0 && dist_calculada_A == 0){
+       dist_calculada_A = 1;
+       distancia_A = ((0.0175 * tiempo_1) - 8.9222 );
        Serial.print("Distancia al emisor A: ");
+       //Serial.println(tiempo_1);
        Serial.print(distancia_A);
        Serial.println(" cm");
     }
   }
   if(ultimo_mensaje_recibido == 'B'){
-    if(tiempo_1 > 0 && num_int == 1/*&& tiempo_2 > 0 && tiempo_3 > 0 && tiempo_4 > 0 && num_int == 4*/ ){
-      //tiempo_0=(tiempo_1 + tiempo_2 + tiempo_3 + tiempo_4)/4;
-      distancia_B = ((0.00199 * tiempo_1) );
+    if(tiempo_1 > 0 && dist_calculada_B == 0){
+      dist_calculada_B = 1;   
+      distancia_B = ((0.0175 * tiempo_1) - 8.9222 );
       Serial.print("Distancia al emisor B: ");
+      //Serial.println(tiempo_1);
       Serial.print(distancia_B);
       Serial.println(" cm");
     }
   }
   if(ultimo_mensaje_recibido == 'C'){
-    if(tiempo_1 > 0 && num_int == 1/*&& tiempo_2 > 0 && tiempo_3 > 0 && tiempo_4 > 0 && num_int == 4*/ ){
-      //tiempo_0=(tiempo_1 + tiempo_2 + tiempo_3 + tiempo_4)/4;
-      distancia_C = ((0.00199 * tiempo_1) );
+    if(tiempo_1 > 0 && dist_calculada_C == 0){
+      dist_calculada_C = 1;
+      distancia_C = ((0.0175 * tiempo_1) - 8.9222 );
       Serial.print("Distancia al emisor C: ");
+      //Serial.println(tiempo_1);
       Serial.print(distancia_C);
       Serial.println(" cm");  
     }
   }
   /*Apartir de aqui calculamos la trilateración*/
   /*Damos valores fijos a las posiciones de los sensores que actuaran de emisor*/
-  /*x1 = 5;
-  y1 = 0;
-  x2 = 2;
-  y2 = -1;
-  x3 = -3; 
-  y3 = -10;
-*/
-  /*Calculos de los sistemas de ecuaciones*/
- /* a = (-2*x1)+(2*x2);
-  b = (-2*y1)+(2*y2);
-  c = (distancia_A*distancia_A)-(distancia_B*distancia_B)-(x1*x1)+(x2*x2)-(y1*y1)+(y2*y2);
-  d = (-2*x2)+(2*x3);
-  e = (-2*y2)+(2*y3);
-  f = (distancia_B*distancia_B)-(distancia_C*distancia_C)-(x2*x2)+(x3*x3)-(y2*y2)+(y3*y3);
-  
-  x_total = ((c*e)-(f*b))/((e*a)-(b*d)); 
-  y_total = ((c*d)-(a*f))/((b*d)-(a*e));
-  */
-  /*Mostramos la posición actual del robot*/
- /* pos_1 = x_total;
-  pos_2 = y_total;
+  if(dist_calculada_A && dist_calculada_B && dist_calculada_C){ //solo entra cuando todas sean true
+    noInterrupts();//deshabilitamos las interrupciones para que en este proceso no salte ninguna 
+    x1 = 59;
+    y1 = 31;
+    x2 = -67;
+    y2 = 39;
+    x3 = 0; 
+    y3 = 0;
+    dist_calculada_A = 0;
+    dist_calculada_B = 0;
+    dist_calculada_C = 0;
 
-  Serial.println("Posición aproximada");
-  Serial.println(pos_1);
-  Serial.println(pos_2);
-*/
+    /*Calculos de los sistemas de ecuaciones*/
+    a = (-2*x1)+(2*x2);
+    b = (-2*y1)+(2*y2);
+    c = (distancia_A*distancia_A)-(distancia_B*distancia_B)-(x1*x1)+(x2*x2)-(y1*y1)+(y2*y2);
+    d = (-2*x2)+(2*x3);
+    e = (-2*y2)+(2*y3);
+    f = (distancia_B*distancia_B)-(distancia_C*distancia_C)-(x2*x2)+(x3*x3)-(y2*y2)+(y3*y3);
+    
+    x_total = ((c*e)-(f*b))/((e*a)-(b*d)); 
+    y_total = ((c*d)-(a*f))/((b*d)-(a*e));
+    
+    /*Mostramos la posición actual del robot*/
+    pos_1 = x_total;
+    pos_2 = y_total;
+  
+    Serial.println("Posición aproximada");
+    Serial.println(pos_1);
+    Serial.println(pos_2);
+    
+    interrupts();//volvemos a habilitar las interrupciones para que se puede realizar de nuevo el calculo de la distancia
+  }
+
   /*Apartir de aqui utilizaremos las funciones de ROS para poder establecer una comunicacion*/
   //Rellenamos los campos de nuestra transformación (tf odom->base_link)
  /* t.header.frame_id = odom;
