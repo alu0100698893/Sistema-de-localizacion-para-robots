@@ -14,11 +14,12 @@
  */
 #include <VirtualWire.h> //libreria para los modulos RF
 #include <TimerThree.h> //libreria para el timer
-/*#include <ros.h>
+#include <ros.h>
 #include <ros/time.h>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
-*/
+#include <nav_msgs/Odometry.h>
+
 const int pin_RF_Receptor = 9; //pin del receptor RF
 const int pin_SR04_Echo_1 = 19; //pin del ultrasonido Echo
 const int pin_SR04_Echo_2 = 21; //pin del ultrasonido Echo
@@ -62,14 +63,16 @@ float pos_1;
 float pos_2;
 
 //ROS
-/*ros::NodeHandle nh; //nodo objeto para ROS
+ros::NodeHandle nh; //nodo objeto para ROS
 geometry_msgs::TransformStamped t; //Instancia de un mensaje para la comunicacion
 tf::TransformBroadcaster broadcaster; //radiodifusor para la comunicacion
+nav_msgs::Odometry odom_msg;
+ros::Publisher odomPub("/odom", &odom_msg);
 
 //Marcos sobre los que se va a realizar la tranformacion
 char base_link[] = "/base_link";
 char odom[] = "/odom";
-*/
+
 void setup() {
   
   Serial.begin(9600);
@@ -84,9 +87,9 @@ void setup() {
   vw_set_rx_pin(pin_RF_Receptor); //Configuramos el pin de recepcion
   vw_rx_start(); //Activamos el proceso de escucha(recepcion)
 
-  /*nh.initNode();
-  broadcaster.init(nh);
-  */
+  nh.initNode();
+  //broadcaster.init(nh);
+  
   Timer3.initialize(50000); //Preescalado para el timer
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_1), calc_time_distancia_1, RISING); //interrupción asignada a nuestro pin arduino
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_2), calc_time_distancia_2, RISING); //interrupción asignada a nuestro pin arduino
@@ -235,16 +238,21 @@ void loop() {
 
   /*Apartir de aqui utilizaremos las funciones de ROS para poder establecer una comunicacion*/
   //Rellenamos los campos de nuestra transformación (tf odom->base_link)
- /* t.header.frame_id = odom;
-  t.child_frame_id = base_link;
-  t.transform.translation.x = x_total;
-  t.transform.translation.y = y_total;
-  t.transform.translation.z = 0.0;
+  odom_msg.header.frame_id = odom;
+  odom_msg.child_frame_id = base_link;
+  odom_msg.pose.pose.position.x = x_total;
+  odom_msg.pose.pose.position.y = y_total;
+  odom_msg.pose.pose.position.z = 0.0;
+  odomPub.publish(&odom_msg);
+  
+  t.header = odom_msg.header;
+  t.child_frame_id = odom_msg.child_frame_id;
+  t.transform.translation.x = odom_msg.pose.pose.position.x;
+  t.transform.translation.y = odom_msg.pose.pose.position.y;
+  t.transform.translation.z = odom_msg.pose.pose.position.z;
   t.header.stamp = nh.now();
 
   //Finalmente publicamos la transformacion y esperamos un poco antes de volver hacerlo
   broadcaster.sendTransform(t);
   nh.spinOnce();
-
-  delay(10);*/
 }
