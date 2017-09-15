@@ -18,7 +18,7 @@
 #include <ros/time.h>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
+
 
 const int pin_RF_Receptor = 9; //pin del receptor RF
 const int pin_SR04_Echo_1 = 19; //pin del ultrasonido Echo
@@ -66,8 +66,6 @@ float pos_2;
 ros::NodeHandle nh; //nodo objeto para ROS
 geometry_msgs::TransformStamped t; //Instancia de un mensaje para la comunicacion
 tf::TransformBroadcaster broadcaster; //radiodifusor para la comunicacion
-nav_msgs::Odometry odom_msg;
-ros::Publisher odomPub("/odom", &odom_msg);
 
 //Marcos sobre los que se va a realizar la tranformacion
 char base_link[] = "/base_link";
@@ -75,7 +73,7 @@ char odom[] = "/odom";
 
 void setup() {
   
-  Serial.begin(9600);
+  Serial.begin(57600);
   pinMode(pin_SR04_Echo_1, INPUT); //activamos el pin del ultrasonido como entrada de la señal
   pinMode(pin_SR04_Echo_2, INPUT); //activamos el pin del ultrasonido como entrada de la señal
   pinMode(pin_SR04_Echo_3, INPUT); //activamos el pin del ultrasonido como entrada de la señal
@@ -88,7 +86,7 @@ void setup() {
   vw_rx_start(); //Activamos el proceso de escucha(recepcion)
 
   nh.initNode();
-  //broadcaster.init(nh);
+  broadcaster.init(nh);
   
   Timer3.initialize(50000); //Preescalado para el timer
   attachInterrupt(digitalPinToInterrupt(pin_SR04_Echo_1), calc_time_distancia_1, RISING); //interrupción asignada a nuestro pin arduino
@@ -138,33 +136,22 @@ void loop() {
  *  de no haber recibido ninguno o de producirse algun fallo
  */
    if(vw_get_message(sms, &sms_len)){
-      //Serial.print("sms: ");
-      //Serial.println(sms[0]);
       if(sms[0] == 'A'){ //Comprobamos que la señal provenga del primer sensor
         Timer3.restart();
         tiempo_1 = 0;
         dist_calculada_A = 0;
-        if(sms[0] != ultimo_mensaje_recibido){
-          Serial.println(" recibido A");
-        }
         ultimo_mensaje_recibido = sms[0];
       }
       if(sms[0] == 'B'){ //Comprobamos que la señal provenga del segundo sensor
         Timer3.restart();
         tiempo_1 = 0;
         dist_calculada_B = 0;
-        if(sms[0] != ultimo_mensaje_recibido){
-          Serial.println(" recibido B");
-        }
         ultimo_mensaje_recibido = sms[0];
       }
       if(sms[0] == 'C'){ //Comprobamos que la señal provenga del tercer sensor
         Timer3.restart(); 
         tiempo_1 = 0;
         dist_calculada_C = 0;
-        if(sms[0] != ultimo_mensaje_recibido){
-          Serial.println(" recibido C");
-        }
         ultimo_mensaje_recibido = sms[0];
       } 
   }
@@ -175,7 +162,7 @@ void loop() {
        dist_calculada_A = 1;
        distancia_A = ((0.0175 * tiempo_1) - 8.9222 );
        Serial.print("Distancia al emisor A: ");
-       //Serial.println(tiempo_1);
+       Serial.println(tiempo_1);
        Serial.print(distancia_A);
        Serial.println(" cm");
     }
@@ -185,7 +172,7 @@ void loop() {
       dist_calculada_B = 1;   
       distancia_B = ((0.0175 * tiempo_1) - 8.9222 );
       Serial.print("Distancia al emisor B: ");
-      //Serial.println(tiempo_1);
+      Serial.println(tiempo_1);
       Serial.print(distancia_B);
       Serial.println(" cm");
     }
@@ -195,7 +182,7 @@ void loop() {
       dist_calculada_C = 1;
       distancia_C = ((0.0175 * tiempo_1) - 8.9222 );
       Serial.print("Distancia al emisor C: ");
-      //Serial.println(tiempo_1);
+      Serial.println(tiempo_1);
       Serial.print(distancia_C);
       Serial.println(" cm");  
     }
@@ -204,12 +191,12 @@ void loop() {
   /*Damos valores fijos a las posiciones de los sensores que actuaran de emisor*/
   if(dist_calculada_A && dist_calculada_B && dist_calculada_C){ //solo entra cuando todas sean true
     noInterrupts();//deshabilitamos las interrupciones para que en este proceso no salte ninguna 
-    x1 = 59;
-    y1 = 31;
-    x2 = -67;
-    y2 = 39;
-    x3 = 0; 
-    y3 = 0;
+    x1 = -30;
+    y1 = 0.5;
+    x2 = -3;
+    y2 = 46;
+    x3 = 32; 
+    y3 = 2;
     dist_calculada_A = 0;
     dist_calculada_B = 0;
     dist_calculada_C = 0;
@@ -234,25 +221,22 @@ void loop() {
     Serial.println(pos_2);
     
     interrupts();//volvemos a habilitar las interrupciones para que se puede realizar de nuevo el calculo de la distancia
+
+    /*Apartir de aqui utilizaremos las funciones de ROS para poder establecer una comunicacion*/
+    //Rellenamos los campos de nuestra transformación (tf odom->base_link)
+    
+    t.header.frame_id = odom;
+    t.child_frame_id = base_link;
+    t.transform.translation.x = x_total;
+    t.transform.translation.y = y_total;
+    t.transform.translation.z = 0.0;
+    t.header.stamp = nh.now();
+  
+    //Finalmente publicamos la transformacion y esperamos un poco antes de volver hacerlo
+    broadcaster.sendTransform(t);
+    nh.spinOnce();
+    delay(10);
   }
 
-  /*Apartir de aqui utilizaremos las funciones de ROS para poder establecer una comunicacion*/
-  //Rellenamos los campos de nuestra transformación (tf odom->base_link)
-  odom_msg.header.frame_id = odom;
-  odom_msg.child_frame_id = base_link;
-  odom_msg.pose.pose.position.x = x_total;
-  odom_msg.pose.pose.position.y = y_total;
-  odom_msg.pose.pose.position.z = 0.0;
-  odomPub.publish(&odom_msg);
   
-  t.header = odom_msg.header;
-  t.child_frame_id = odom_msg.child_frame_id;
-  t.transform.translation.x = odom_msg.pose.pose.position.x;
-  t.transform.translation.y = odom_msg.pose.pose.position.y;
-  t.transform.translation.z = odom_msg.pose.pose.position.z;
-  t.header.stamp = nh.now();
-
-  //Finalmente publicamos la transformacion y esperamos un poco antes de volver hacerlo
-  broadcaster.sendTransform(t);
-  nh.spinOnce();
 }

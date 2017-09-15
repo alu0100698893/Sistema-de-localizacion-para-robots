@@ -57,7 +57,6 @@ void loop() {
     Serial.println("Nuevo Mensaje A");
     delay(1000); 
     for( i = 0; i < 10; i++ ){
-      //delay(10);
       Ultimo_envio = millis();
       const char *mensaje = "A"; //mensaje identificativo que enviaremos al receptor
       vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada

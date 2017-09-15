@@ -35,7 +35,6 @@ void loop() {
       Serial.println("Llego mensaje");
       delay(3000);
       for( i = 0; i < 10; i++ ){
-         //delay(10);
          //Comunicacion RF
          const char *mensaje = "C"; //mensaje identificativo que enviaremos al receptor
          vw_send((uint8_t *)mensaje, strlen(mensaje)); //transmite el mensaje con la long dada
